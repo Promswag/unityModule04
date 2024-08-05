@@ -13,8 +13,8 @@ public class LeavesSpawner : MonoBehaviour
         if (elapsedTime > spawnTime)
         {
             elapsedTime = 0;
-            spawnTime = Random.Range(0f, 5f);
-            Vector3 pos = new(Random.Range(-19f, 11f), transform.position.y);
+            spawnTime = Random.Range(0f, 2f);
+            Vector3 pos = new(Random.Range(-25f, 15f), transform.position.y);
             Quaternion rotation = Quaternion.Euler(Vector3.forward * Random.Range(-180f, 180f));
 
             GameObject leaf = Instantiate(fallingLeafPrefab, pos, rotation, transform);
@@ -27,7 +27,7 @@ public class LeavesSpawner : MonoBehaviour
 
     private IEnumerator Lifetime(GameObject leaf)
     {
-        yield return new WaitForSeconds(10f);
+        yield return new WaitForSeconds(20f);
         Destroy(leaf);
     }
 }

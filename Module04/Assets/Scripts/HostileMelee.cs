@@ -22,20 +22,24 @@ public class HostileMelee : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collider)
     {
-        if (isOnCooldown)
+        if (collider.GetType() == typeof(CapsuleCollider2D))
         {
-            strikeArea.enabled = false;
-            collider.GetComponent<PlayerController>().TakesDamage(damage);
-            return;
+            if (isOnCooldown)
+            {
+                Debug.Log(collider.GetType());
+                strikeArea.enabled = false;
+                collider.GetComponent<PlayerController>().TakesDamage(damage);
+                return;
+            }
+
+            isOnCooldown = true;
+            detectionArea.enabled = false;
+
+            animator.SetTrigger("attack");
+            Debug.LogFormat("{0} is attacking!", gameObject.name);
+            
+            FlipX(collider.transform.position);
         }
-
-        isOnCooldown = true;
-        detectionArea.enabled = false;
-
-        animator.SetTrigger("attack");
-        Debug.LogFormat("{0} is attacking!", gameObject.name);
-        
-        FlipX(collider.transform.position);
     }
 
     void FlipX(Vector3 pos)

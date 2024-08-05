@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class HostileRanged : MonoBehaviour
@@ -45,7 +46,7 @@ public class HostileRanged : MonoBehaviour
 
     public void FireProjectile()
     {
-        Instantiate(projectile, muzzle).SetVelocity(target.transform.position);
+        Instantiate(projectile, muzzle.position, quaternion.identity).SetVelocity(target.transform.position);
         audioSource.Play();
     }
 

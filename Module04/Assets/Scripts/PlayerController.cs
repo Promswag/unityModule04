@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerController : MonoBehaviour
 {
@@ -18,13 +19,14 @@ public class PlayerController : MonoBehaviour
 	private int maxHp = 3;
 	private int hp = 3;
 
-	private bool isDead;
-	// private bool isMoving;
+	private bool isDead = false;
+	private bool platformPriority = false;
 
 	[SerializeField] private AudioClip jumpAudioClip;
 	[SerializeField] private AudioClip takesDamageAudioClip;
 	[SerializeField] private AudioClip diesAudioClip;
 	[SerializeField] private AudioClip respawnsAudioClip;
+	[SerializeField] private TilemapCollider2D platforms;
 
 	void Awake()
 	{
@@ -44,8 +46,8 @@ public class PlayerController : MonoBehaviour
 			{
 				isJumping = true;
 				isGrounded = false;
-				animator.SetTrigger("hasJumped");
 				rigidBody.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+				animator.SetTrigger("hasJumped");
 				PlayAudioClip(jumpAudioClip);
 			}
 		}
@@ -56,21 +58,28 @@ public class PlayerController : MonoBehaviour
 		animator.SetFloat("velocity", Mathf.Abs(rigidBody.velocity.x));
 		
 		FlipX();
-		// if (!isMoving)
-		// {
-		// 	if (Input.GetKeyDown(KeyCode.J))
-		// 	{
-		// 		isMoving = true;
-		// 		spriteRenderer.flipX = false;
-		// 		animator.Play("Base Layer.Walk2");
-		// 	}
-		// 	else if (Input.GetKeyDown(KeyCode.G))
-		// 	{
-		// 		isMoving = true;
-		// 		spriteRenderer.flipX = true;
-		// 		animator.Play("Base Layer.Walk2");
-		// 	}
-		// }
+		MovingThroughPlatforms();
+	}
+
+	void MovingThroughPlatforms()
+	{
+			if (Input.GetKey(KeyCode.S))
+		{
+			platforms.enabled = false;
+			if (!platformPriority)
+				StartCoroutine(DropThroughPlatforms());
+		}
+		else if (rigidBody.velocity.y > 0.1f)
+			platforms.enabled = false;
+		else if (!platformPriority)
+			platforms.enabled = true;	
+	}
+
+	IEnumerator DropThroughPlatforms()
+	{
+		platformPriority = true;
+		yield return new WaitForSeconds(0.2f);
+		platformPriority = false;
 	}
 
 	void FlipX()
@@ -81,21 +90,6 @@ public class PlayerController : MonoBehaviour
 			spriteRenderer.flipX = false;
 	}
 
-	void OnCollisionEnter2D(Collision2D collision)
-	{
-		foreach (ContactPoint2D contact in collision.contacts)
-		{
-			if (contact.normal == Vector2.up)
-			{
-				isGrounded = true;
-				if (isJumping)
-				{
-					isJumping = false;
-					animator.SetTrigger("hasLanded");
-				}
-			}
-		}
-	}
 
 	public void TakesDamage(int amount)
 	{
@@ -119,16 +113,26 @@ public class PlayerController : MonoBehaviour
 		}
 	}
 
-	void OnCollisionExit2D(Collision2D collision)
+	void OnTriggerStay2D(Collider2D collider)
 	{
-		if (collision.gameObject.layer == LayerMask.NameToLayer("Default"))
-			isGrounded = false;
+		isGrounded = true;
+		if (isJumping)
+		{
+			isJumping = false;
+			animator.SetTrigger("hasLanded");
+		}
+	}	
+
+	void OnTriggerExit2D(Collider2D collider)
+	{
+		isGrounded = false;
 	}
 
 	IEnumerator Respawn()
 	{
 		GameManager.instance.Respawn();
 		enabled = false;
+		rigidBody.velocity = Vector2.zero;
 		yield return new WaitForSeconds(2.9f);
 		spriteRenderer.flipX = false;
 		animator.SetTrigger("respawns");
@@ -144,10 +148,4 @@ public class PlayerController : MonoBehaviour
 		audioSource.clip = clip;
 		audioSource.Play();
 	}
-
-	// public void MoveStep()
-	// {
-	// 	isMoving = false;
-	// 	transform.position = new(transform.position.x + (spriteRenderer.flipX ? -3.3f : 3.3f), transform.position.y);
-	// }
 }
